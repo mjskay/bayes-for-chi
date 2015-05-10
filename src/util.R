@@ -1,14 +1,24 @@
 ### Helper functions for making nice plots
 
 library(coda)
+library(modeest)
 
 #function for use with stat_summary that returns the median and
 #highest density interval of the data
 median_hdi = function(x, ...) {
+    HPDinterval(mcmc(x), ...) %>%
+        data.frame() %>%
+        transmute(ymin = lower, ymax = upper) %>% 
+        cbind(y = median(x, ...))
+}
+
+#function for use with stat_summary that returns the mode and
+#highest density interval of the data
+mode_hdi = function(x, ...) {
     HPDinterval(mcmc(x), ...) %>% 
         data.frame() %>% 
         transmute(ymin = lower, ymax = upper) %>% 
-        cbind(y = median(x, ...))
+        cbind(y = parzen(x, ...))
 }
 
 #simple posterior violin plot
@@ -18,7 +28,7 @@ ggposterior = function(.data, .aes) {
             .aes
         ) + 
         geom_violin(linetype=0, fill="skyblue") + 
-        stat_summary(fun.data=median_hdi) +
+        stat_summary(fun.data=mode_hdi) +
         coord_flip() 
 }
 
