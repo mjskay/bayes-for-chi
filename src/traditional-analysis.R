@@ -49,7 +49,7 @@ study_effects %<>% rbind(data.frame(
 #plot of difference
 ggplot(participant_effects, aes(x=experiment, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="skyblue") +
+    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
     geom_point(alpha=0.25, size=3) +
     geom_pointrange(data=study_effects, mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max), color="red", size=0.75) +
     coord_flip() +
@@ -62,5 +62,5 @@ ggplot(participant_effects, aes(x=experiment, y=response_rate_log_diff)) +
     geom_pointrange(data=study_effects, mapping=aes(ymin=response_rate_log_diff_min, ymax=response_rate_log_diff_max), color="red", size=0.75) +
     coord_flip()
 
-#save.image("output/e3-1.RData")
+#save.image("output/e123-1.RData")
 #load("output/e3-1.RData")

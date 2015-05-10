@@ -27,8 +27,8 @@ ggposterior = function(.data, .aes) {
             .data,
             .aes
         ) + 
-        geom_violin(linetype=0, fill="skyblue") + 
-        stat_summary(fun.data=mode_hdi) +
+        geom_violin(linetype=0, fill="#cccccc") + 
+        stat_summary(fun.data=mode_hdi, color="red", size=0.75) +
         coord_flip() 
 }
 

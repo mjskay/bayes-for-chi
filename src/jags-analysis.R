@@ -27,7 +27,7 @@ params = rbind(
 #plot posteriors together
 ggposterior(params, aes(x=experiment, y=b2)) +
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="skyblue") +
+    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
     ylim(-4,4)
 
 ggposterior(params, aes(x=experiment, y=b1)) +
