@@ -29,13 +29,3 @@ ggdensity = function(.data, .aes) {
         ) + 
         stat_density(linetype=0, fill="skyblue")  
 }
-
-#destructuring assignment
-`%<-%` = function(lhs, rhs) {
-    frame = parent.frame()
-    variables = as.character(substitute(lhs)[-1])
-    for (i in seq_along(variables)) {
-        frame[[variables[[i]]]] = rhs[[i]]
-    }
-}
-
