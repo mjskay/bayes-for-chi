@@ -5,23 +5,21 @@ source("src/jags-analysis-util.R")
 #as the prior for the next
 m1 = run_jags_analysis(filter(df, experiment == "e1"))
 m2 = run_jags_analysis(filter(df, experiment == "e2"),
-    b1_prior = m1$b1_dist,
-    b2_prior = m1$b2_dist,
-    tau_prior = m1$tau_dist,
-    participant_tau_prior = m1$participant_tau_dist
+    b_priors = m2$b_posts,
+    tau_prior = m1$tau_post,
+    participant_tau_prior = m1$participant_tau_post
 )
 m3 = run_jags_analysis(filter(df, experiment == "e3"),
-    b1_prior = m2$b1_dist,
-    b2_prior = m2$b2_dist,
-    tau_prior = m2$tau_dist,
-    participant_tau_prior = m2$participant_tau_dist
+    b_priors = m2$b_posts,
+    tau_prior = m2$tau_post,
+    participant_tau_prior = m2$participant_tau_post
 )
 m4 = run_jags_analysis(filter(df, experiment == "e4"),
-    two_treatments = TRUE,
-    b1_prior = m3$b1_dist,
-    b2_prior = m3$b2_dist,
-    tau_prior = m3$tau_dist,
-    participant_tau_prior = m3$participant_tau_dist
+    b_priors = c(m3$b_posts,
+        .(dnorm(0,0.01))
+    ),
+    tau_prior = m3$tau_post,
+    participant_tau_prior = m3$participant_tau_post
 )
 
 #combine posteriors into one dataset

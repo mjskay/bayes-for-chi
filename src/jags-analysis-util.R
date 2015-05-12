@@ -18,30 +18,26 @@ dst <- function(x, m, s, df) dt((x-m)/s, df)/s
 ## pass in a data frame of one experiment to analyze, along with 
 ## priors
 run_jags_analysis = function(df,
-        two_treatments = FALSE,
-        b1_prior = .(dnorm(0,0.01)), 
-        b2_prior = .(dnorm(0,0.01)), 
-        b3_prior = .(dnorm(0,0.01)), 
+        b_priors = list(
+            .(dnorm(0,0.01)), 
+            .(dnorm(0,0.01))
+        ), 
         tau_prior = .(dgamma(2,2)),
         participant_tau_prior = .(dgamma(2,2))
     ) {
     jags_model = metajags_model({
         #core model
         for (i in 1:n) {
-            rating[i] ~ dnorm(b1 + b2 * (interface[i] == 2) + 
-                    (if (two_treatments) b3 * (interface[i] == 3) else 0) +
-                    u[participant[i]], tau)
+            rating[i] ~ dnorm(b[interface[i]] + u[participant[i]], tau)
         }
         
-        #intercept
-        b1 ~ R(b1_prior)
+        #interface effects
+        R(lapply(seq_along(b_priors), function(i) bquote(
+            b[.(i)] ~ .(b_priors[[i]])
+        )))
         
         #variance
         tau ~ R(tau_prior)
-        
-        #interface effects
-        b2 ~ R(b2_prior)
-        if (two_treatments) b3 ~ R(b3_prior)
         
         #participant effects
         participant_tau ~ R(participant_tau_prior)
@@ -58,7 +54,7 @@ run_jags_analysis = function(df,
     
     #fit jags model
     m$fit = run.jags(
-            model=jags_model$code, monitor=c("b1", "b2", if (two_treatments) "b3", "u", "tau", "participant_tau"), 
+            model=jags_model$code, monitor=c("b", "u", "tau", "participant_tau"), 
             burnin=500000, sample=10000, thin=50, modules="glm", data=data_list, method="parallel"
         ) %>%
         apply_prototypes(df)
@@ -67,21 +63,16 @@ run_jags_analysis = function(df,
     within(m, { 
         params = as.data.frame(as.matrix(as.mcmc.list(fit)))
         
-        b1_post = fitdistr(params$b1, dst, start=list(m=mean(params$b1), s=sd(params$b1), df=20))$estimate
-        b1_dist = with(as.list(b1_post), bquote(dt(.(m), .(1/s^2), .(df))))
-         
-        b2_post = fitdistr(params$b2, dst, start=list(m=mean(params$b2), s=sd(params$b2), df=20))$estimate
-        b2_dist = with(as.list(b2_post), bquote(dt(.(m), .(1/s^2), .(df))))
+        b = extract_samples(fit, b[interface])
+        b_fits = dlply(b, ~ interface, function(b) 
+            as.list(fitdistr(b$b, dst, start=list(m=mean(b$b), s=sd(b$b), df=20))$estimate))
+        b_posts = llply(b_fits, function(fit)
+            with(fit, bquote(dt(.(m), .(1/s^2), .(df)))))
+
+        tau_fit = as.list(fitdist(params$tau, "gamma", start=list(shape=1, rate=1), method="mge", gof="CvM")$estimate)
+        tau_post = with(tau_fit, bquote(dgamma(.(shape), .(rate))))
         
-        if (two_treatments) {
-            b3_post = fitdistr(params$b3, dst, start=list(m=mean(params$b3), s=sd(params$b3), df=20))$estimate
-            b3_dist = with(as.list(b3_post), bquote(dt(.(m), .(1/s^2), .(df))))
-        }
-        
-        tau_post = fitdist(params$tau, "gamma", start=list(shape=1, rate=1), method="mge", gof="CvM")$estimate
-        tau_dist = with(as.list(tau_post), bquote(dgamma(.(shape), .(rate))))
-        
-        participant_tau_post = fitdist(params$participant_tau, "gamma", start=list(shape=1, rate=1), method="mge", gof="CvM")$estimate
-        participant_tau_dist = with(as.list(participant_tau_post), bquote(dgamma(.(shape), .(rate))))
+        participant_tau_fit = as.list(fitdist(params$participant_tau, "gamma", start=list(shape=1, rate=1), method="mge", gof="CvM")$estimate)
+        participant_tau_post = with(participant_tau_fit, bquote(dgamma(.(shape), .(rate))))
     })
 }
