@@ -5,7 +5,7 @@ source("src/jags-analysis-util.R")
 #as the prior for the next
 m1 = run_jags_analysis(filter(df, experiment == "e1"))
 m2 = run_jags_analysis(filter(df, experiment == "e2"),
-    b_priors = m2$b_posts,
+    b_priors = m1$b_posts,
     tau_prior = m1$tau_post,
     participant_tau_prior = m1$participant_tau_post
 )
@@ -29,35 +29,56 @@ params = rbind.fill(
     cbind(experiment="e3", m3$params),
     cbind(experiment="e4", m4$params)
 )
+b = rbind.fill(
+    cbind(experiment="e1", m1$b),
+    cbind(experiment="e2", m2$b),
+    cbind(experiment="e3", m3$b),
+    cbind(experiment="e4", m4$b),
+    #add contrast between treatments in last experiment
+    extract_samples(m4$fit, b[interface] | interface) %>%
+        mutate(
+            experiment = "e4",
+            b = treatment2 - treatment1,
+            interface = "treatment2 - treatment1"
+        )
+)
 
-#plot posteriors together
-ggposterior(params, aes(x=experiment, y=b2)) +
+#treatment effects
+b_nc = filter(b, interface != "control")
+ggposterior(b_nc, aes(x=interface, y=b)) +
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
     geom_hline(yintercept=1.0, linetype="dashed", color="skyblue") +
-    scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
+    scale_x_discrete(limits=rev(levels(factor(b_nc$interface)))) +    #reverse interface display order
+    facet_grid(experiment ~ .) +
     ylim(-4,4)
 
-ggposterior(params, aes(x=experiment, y=b3)) +
-    geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1.0, linetype="dashed", color="skyblue") +
-    scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
-    ylim(-4,4)
-
-#difference in experiment 4
-ggposterior(filter(params, experiment == "e4"), aes(x=experiment, y=b3 - b2)) +
-    geom_hline(yintercept=0, linetype="dashed")
-
-
-ggposterior(params, aes(x=experiment, y=b1)) +
-    scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
-    geom_hline(yintercept=0, linetype="dashed")
-
+#within-participant sd
 ggposterior(params, aes(x=experiment, y=sqrt(1/tau))) +
     scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
     geom_hline(yintercept=1, linetype="dashed")
 
+#within-participant precision, experiment 1 with prior
+ggdensity(filter(params, experiment=="e1"), aes(x=tau)) +
+    stat_function(fun=dgamma, args=list(1,1)) +
+    xlim(0, 10)
+
+#within-participant precision with analytical fit
+ggdensity(filter(params, experiment=="e4"), aes(x=tau)) +
+    stat_function(fun=dgamma, args=m4$tau_fit)
+
+#between-participant sd
 ggposterior(params, aes(x=experiment, y=sqrt(1/participant_tau))) +
     scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
     geom_hline(yintercept=1, linetype="dashed")
+
+#within-participant precision, experiment 1 with prior
+ggdensity(filter(params, experiment=="e1"), aes(x=participant_tau)) +
+    stat_function(fun=dgamma, args=list(1,1)) +
+    xlim(0, 10)
+
+#between-participant precision with analytical fit
+ggdensity(filter(params, experiment=="e4"), aes(x=participant_tau)) +
+    stat_function(fun=dgamma, args=m4$participant_tau_fit)
+
+    

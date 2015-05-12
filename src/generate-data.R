@@ -3,8 +3,8 @@
 # Author: Matthew
 ###############################################################################
 
-library(plyr)
 library(magrittr)
+library(plyr)
 library(dplyr)
 library(ggplot2)
 library(lme4)

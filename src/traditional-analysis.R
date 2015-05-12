@@ -77,7 +77,7 @@ study_effects %<>% rbind(data.frame(
         response_rate_se = smm.response_rate$se
     ))
 
-#plot of treatment effects
+#plot of treatment effects (all aligned)
 ggplot(participant_effects, aes(x=interface, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
@@ -89,18 +89,7 @@ ggplot(participant_effects, aes(x=interface, y=rating_diff)) +
     coord_flip() +
     ylim(-4,5)
 
-ggplot(study_effects, aes(x=interface, y=rating_diff)) + 
-    geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1, linetype="dashed", color="skyblue") +
-#    geom_point(alpha=0.25, size=3, color="#999999") +
-    geom_pointrange(mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
-#    scale_x_discrete(limits=rev(levels(study_effects$experiment))) +    #reverse experiment display order
-    facet_grid(experiment ~ .) +
-    coord_flip() 
-#    ylim(-4,4)
-
-
+#plot of treatment effects (multiple columns)
 ggplot(participant_effects, aes(x=experiment, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
@@ -111,15 +100,6 @@ ggplot(participant_effects, aes(x=experiment, y=rating_diff)) +
     facet_wrap(~interface) +
     coord_flip() +
     ylim(-4,4)
-
-
-ggplot(participant_effects, aes(x=experiment, y=response_rate_log_diff)) + 
-    geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=log(1.5), linetype="dashed", color="skyblue") +
-    geom_point(alpha=0.25, size=3) +
-    geom_pointrange(data=study_effects, mapping=aes(ymin=response_rate_log_diff_min, ymax=response_rate_log_diff_max), color="red", size=0.75) +
-    scale_x_discrete(limits=rev(levels(study_effects$experiment))) +    #reverse experiment display order
-    coord_flip()
 
 #save.image("output/e123-1.RData")
 #load("output/e3-1.RData")

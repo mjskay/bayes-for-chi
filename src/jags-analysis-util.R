@@ -1,6 +1,6 @@
 ## Utility functions for the JAGS analysis
 
-library(MASS)
+library(MASS, pos=which(search() == "package:stats"))   #load MASS high up on search path to prevent MASS::select() from having priority
 library(fitdistrplus)
 library(magrittr)
 library(plyr)
@@ -22,13 +22,15 @@ run_jags_analysis = function(df,
             .(dnorm(0,0.01)), 
             .(dnorm(0,0.01))
         ), 
-        tau_prior = .(dgamma(2,2)),
-        participant_tau_prior = .(dgamma(2,2))
+        tau_prior = .(dgamma(1,1)),
+        participant_tau_prior = .(dgamma(1,1))
     ) {
     jags_model = metajags_model({
         #core model
         for (i in 1:n) {
-            rating[i] ~ dnorm(b[interface[i]] + u[participant[i]], tau)
+            rating[i] ~ dnorm(b[1] + 
+                    ifelse(interface[i] > 1, b[interface[i]], 0) +
+                    u[participant[i]], tau)
         }
         
         #interface effects
