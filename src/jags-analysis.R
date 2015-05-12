@@ -36,6 +36,7 @@ params = rbind.fill(
 ggposterior(params, aes(x=experiment, y=b2)) +
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
+    geom_hline(yintercept=1.0, linetype="dashed", color="skyblue") +
     scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
     ylim(-4,4)
 
@@ -45,6 +46,11 @@ ggposterior(params, aes(x=experiment, y=b3)) +
     geom_hline(yintercept=1.0, linetype="dashed", color="skyblue") +
     scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order
     ylim(-4,4)
+
+#difference in experiment 4
+ggposterior(filter(params, experiment == "e4"), aes(x=experiment, y=b3 - b2)) +
+    geom_hline(yintercept=0, linetype="dashed")
+
 
 ggposterior(params, aes(x=experiment, y=b1)) +
     scale_x_discrete(limits=rev(levels(params$experiment))) +    #reverse experiment display order

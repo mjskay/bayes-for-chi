@@ -4,6 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(lme4)
 library(metafor)
+library(lsmeans)
 
 theme_set(theme_bw())
 
@@ -16,7 +17,7 @@ study_effects = ddply(df, ~ experiment, function (df) {
         #For each treatment (non-control) condition, get an 
         #estimate of the mean difference against the control.
         #This assumes that the control condition is the first level.
-        ldply(levels(factor(df$interface))[-1], function(interface) {
+        effects = ldply(levels(factor(df$interface))[-1], function(interface) {
                 coef_name = paste0("interface", interface)
                 ci.rating = confint(m.rating, method="Wald")[coef_name,]
                 ci.response_rate = confint(m.response_rate, method="Wald")[coef_name,]
@@ -33,6 +34,27 @@ study_effects = ddply(df, ~ experiment, function (df) {
                     response_rate_se = summary(m.response_rate)$coef[coef_name,"Std. Error"]
                 )
             })
+        
+        #if there are 3 conditions, include contrasts of the two treatments
+        if (length(levels(factor(df$interface))) == 3) {
+            #3rd row is contrast between treatments 
+            contr.rating = confint(lsmeans(m.rating, pairwise ~ interface)$contrasts)[3,]
+            contr.response_rate = confint(lsmeans(m.response_rate, pairwise ~ interface)$contrasts)[3,]
+            
+            #effects are negated because lsmeans compares the levels in the opposite order to what we want
+            rbind(effects, data.frame(
+                    interface = "treatment2 - treatment1",
+                    rating_diff = -contr.rating$estimate,
+                    rating_diff_min = -contr.rating$upper.CL,
+                    rating_diff_max = -contr.rating$lower.CL,
+                    rating_se = contr.rating$SE,
+                    response_rate_log_diff = -contr.response_rate$estimate, 
+                    response_rate_log_diff_min = -contr.response_rate$asymp.UCL,
+                    response_rate_log_diff_max = -contr.response_rate$asymp.LCL,
+                    response_rate_se = contr.response_rate$SE
+                ))
+        }
+        else effects
     })
 
 #meta analysis
@@ -55,7 +77,30 @@ study_effects %<>% rbind(data.frame(
         response_rate_se = smm.response_rate$se
     ))
 
-#plot of difference
+#plot of treatment effects
+ggplot(participant_effects, aes(x=interface, y=rating_diff)) + 
+    geom_hline(yintercept=0, linetype="dashed") +
+    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
+    geom_hline(yintercept=1, linetype="dashed", color="skyblue") +
+    geom_point(alpha=0.25, size=3, color="#999999") +
+    geom_pointrange(data=study_effects, mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
+    scale_x_discrete(limits=rev(levels(study_effects$interface))) +    #reverse treatment display order
+    facet_grid(experiment ~ .) +
+    coord_flip() +
+    ylim(-4,5)
+
+ggplot(study_effects, aes(x=interface, y=rating_diff)) + 
+    geom_hline(yintercept=0, linetype="dashed") +
+    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
+    geom_hline(yintercept=1, linetype="dashed", color="skyblue") +
+#    geom_point(alpha=0.25, size=3, color="#999999") +
+    geom_pointrange(mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
+#    scale_x_discrete(limits=rev(levels(study_effects$experiment))) +    #reverse experiment display order
+    facet_grid(experiment ~ .) +
+    coord_flip() 
+#    ylim(-4,4)
+
+
 ggplot(participant_effects, aes(x=experiment, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
@@ -64,7 +109,9 @@ ggplot(participant_effects, aes(x=experiment, y=rating_diff)) +
     geom_pointrange(data=study_effects, mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
     scale_x_discrete(limits=rev(levels(study_effects$experiment))) +    #reverse experiment display order
     facet_wrap(~interface) +
-    coord_flip()
+    coord_flip() +
+    ylim(-4,4)
+
 
 ggplot(participant_effects, aes(x=experiment, y=response_rate_log_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
