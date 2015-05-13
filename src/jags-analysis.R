@@ -48,14 +48,18 @@ b = rbind.fill(
 )
 
 #treatment effects
-b_nc = filter(b, interface != "control")
-ggposterior(b_nc, aes(x=interface, y=b)) +
+b_nc = filter(b, interface != "control") %>%
+    mutate(
+        #include (empty) meta experiment to line up plot with traditional analysis 
+        experiment = factor(experiment, levels=c(levels(factor(experiment)), "meta"))
+        )
+ggposterior(b_nc, aes(x=interface, y=b, color=interface)) +
     geom_hline(yintercept=0, linetype="dashed") +
     geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1.0, linetype="dashed", color="skyblue") +
+    geom_hline(yintercept=1.0, linetype="dashed", color="green") +
     scale_x_discrete(limits=rev(levels(factor(b_nc$interface)))) +    #reverse interface display order
-    facet_grid(experiment ~ .) +
-    ylim(-4,4)
+    facet_grid(experiment ~ ., drop=FALSE) +
+    ylim(-2,3)
 
 #within-participant sd
 ggposterior(params, aes(x=experiment, y=sqrt(1/tau))) +
