@@ -16,11 +16,15 @@ m3 = run_jags_analysis(filter(df, experiment == "e3"),
 )
 m4 = run_jags_analysis(filter(df, experiment == "e4"),
     b_priors = c(m3$b_posts,
-        .(dnorm(0,0.01))
+        #normal prior with scale derived from posterior of previous treatment
+        #(sd of twice the approx top end of the 95% conf int)
+        bquote(dnorm(0, .(with(m3$b_fits$treatment1, 1/((m + s * 2) * 2) ^ 2))))
     ),
     tau_prior = m3$tau_post,
     participant_tau_prior = m3$participant_tau_post
 )
+
+
 
 #combine posteriors into one dataset
 params = rbind.fill(
