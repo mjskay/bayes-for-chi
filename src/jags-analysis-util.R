@@ -25,7 +25,7 @@ run_jags_analysis = function(df,
         tau_prior = .(dgamma(1,1)),
         participant_tau_prior = .(dgamma(1,1))
     ) {
-    jags_model = metajags_model({
+    jags_model = metajags({
         #core model
         for (i in 1:n) {
             rating[i] ~ dnorm(b[1] + 
