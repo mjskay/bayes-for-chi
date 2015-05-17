@@ -1,5 +1,5 @@
 #stan analysis of experimental data
-#N.B. INCOMPLETE; USING BAYES NOW
+#N.B. INCOMPLETE; USING JAGS NOW
 
 stan_model = "
     data {

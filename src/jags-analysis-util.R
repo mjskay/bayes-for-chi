@@ -18,13 +18,14 @@ dst <- function(x, m, s, df) dt((x-m)/s, df)/s
 ## pass in a data frame of one experiment to analyze, along with 
 ## priors
 run_jags_analysis = function(df,
-        b_priors = list(
-            .(dnorm(0,0.01)), 
-            .(dnorm(0,0.01))
+        b_priors = .(
+            dnorm(0,0.01), 
+            dnorm(0,0.01)
         ), 
         tau_prior = .(dgamma(1,1)),
         participant_tau_prior = .(dgamma(1,1))
     ) {
+        
     jags_model = metajags({
         #core model
         for (i in 1:n) {
@@ -47,7 +48,7 @@ run_jags_analysis = function(df,
             u[k] ~ dnorm(0, participant_tau)
         }
     })
-            
+
     data_list = df %>%
         select(rating, interface, participant) %>% 
         compose_data() 
@@ -56,7 +57,7 @@ run_jags_analysis = function(df,
     
     #fit jags model
     m$fit = run.jags(
-            model=jags_model$code, monitor=c("b", "u", "tau", "participant_tau"), 
+            model=code(jags_model), monitor=c("b", "u", "tau", "participant_tau"), 
             burnin=500000, sample=10000, thin=50, modules="glm", data=data_list, method="parallel"
         ) %>%
         apply_prototypes(df)
