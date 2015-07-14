@@ -80,8 +80,8 @@ study_effects %<>% rbind(data.frame(
 #plot of treatment effects (all aligned)
 ggplot(participant_effects, aes(x=interface, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1, linetype="dashed", color="green") +
+    geom_hline(yintercept=treatment1_rating, linetype="dashed", color="red") +
+    geom_hline(yintercept=treatment2_rating, linetype="dashed", color="green") +
     geom_point(alpha=0.25, size=3, color="#999999") +
     geom_pointrange(data=study_effects, mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
     scale_x_discrete(limits=rev(levels(study_effects$interface))) +    #reverse treatment display order
@@ -92,13 +92,15 @@ ggplot(participant_effects, aes(x=interface, y=rating_diff)) +
 #plot of treatment effects (all aligned, no data)
 ggplot(study_effects, aes(x=interface, y=rating_diff)) + 
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1, linetype="dashed", color="skyblue") +
+    geom_hline(yintercept=treatment1_rating, linetype="dashed", color="red") +
+    geom_hline(yintercept=treatment2_rating, linetype="dashed", color="green") +
     geom_pointrange(mapping=aes(ymin=rating_diff_min, ymax=rating_diff_max, color=interface), size=0.75) +
     scale_x_discrete(limits=rev(levels(study_effects$interface))) +    #reverse treatment display order
     facet_grid(experiment ~ .) +
     coord_flip() +
     ylim(-2,3)
+
+ggsave("output/traditional-analysis.pdf")
 
 #plot of treatment effects (multiple columns)
 ggplot(participant_effects, aes(x=experiment, y=rating_diff)) + 
@@ -112,5 +114,5 @@ ggplot(participant_effects, aes(x=experiment, y=rating_diff)) +
     coord_flip() +
     ylim(-4,4)
 
-#save.image("output/e1234-1.RData")
+#save.image("output/e1234-es0.3-1.RData")
 #load("output/e3-1.RData")

@@ -33,18 +33,14 @@ params = rbind.fill(
     cbind(experiment="e3", m3$params),
     cbind(experiment="e4", m4$params)
 )
-b = rbind.fill(
+b = rbind(
     cbind(experiment="e1", m1$b),
     cbind(experiment="e2", m2$b),
     cbind(experiment="e3", m3$b),
     cbind(experiment="e4", m4$b),
     #add contrast between treatments in last experiment
-    extract_samples(m4$fit, b[interface] | interface) %>%
-        mutate(
-            experiment = "e4",
-            b = treatment2 - treatment1,
-            interface = "treatment2 - treatment1"
-        )
+    cbind(experiment="e4", compare_levels(m4$b, b, by=interface, 
+            comparison=.(treatment2 - treatment1)))
 )
 
 #treatment effects
@@ -55,11 +51,12 @@ b_nc = filter(b, interface != "control") %>%
         )
 ggposterior(b_nc, aes(x=interface, y=b, color=interface)) +
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=0.5, linetype="dashed", color="red") +
-    geom_hline(yintercept=1.0, linetype="dashed", color="green") +
+    geom_hline(yintercept=treatment1_rating, linetype="dashed", color="red") +
+    geom_hline(yintercept=treatment2_rating, linetype="dashed", color="green") +
     scale_x_discrete(limits=rev(levels(factor(b_nc$interface)))) +    #reverse interface display order
     facet_grid(experiment ~ ., drop=FALSE) +
     ylim(-2,3)
+ggsave("output/jags-analysis.pdf")
 
 #within-participant sd
 ggposterior(params, aes(x=experiment, y=sqrt(1/tau))) +

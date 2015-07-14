@@ -14,9 +14,12 @@ rating_between_subject_sd = 1
 
 response_rate_between_subject_sd = 1
 
+treatment1_rating = 0.3
+treatment2_rating = 0.6
+
 #run experiment i with n subjects
 run_experiment = function(i, n, 
-        ratings = list(treatment1=0.5),
+        ratings = list(treatment1=treatment1_rating),
         response_rates = list(treatment1=15)
     ) {
     rating_participant_intercept = rnorm(n, 0, rating_between_subject_sd)
@@ -43,11 +46,11 @@ run_experiment = function(i, n,
 
 #all observations from all experiments
 df = rbind(
-    run_experiment(1, 20),
-    run_experiment(2, 20),
-    run_experiment(3, 20),
-    run_experiment(4, 20, 
-        ratings=list(treatment1=0.5, treatment2=1),
+    run_experiment(1, 30),
+    run_experiment(2, 30),
+    run_experiment(3, 30),
+    run_experiment(4, 30, 
+        ratings=list(treatment1=treatment1_rating, treatment2=treatment2_rating),
         response_rates=list(treatment1=15, treatment2=20)
     )
 )

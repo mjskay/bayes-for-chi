@@ -21,9 +21,13 @@ run_jags_analysis = function(df,
         b_priors = .(
             dnorm(0,0.01), 
             dnorm(0,0.01)
-        ), 
-        tau_prior = .(dgamma(1,1)),
-        participant_tau_prior = .(dgamma(1,1))
+        ),
+        sigma_prior = .(dunif(0,100)), 
+        participant_sigma_prior = .(dunif(0,100)),
+        tau_prior = NA,
+        participant_tau_prior = NA 
+#        tau_prior = .(dgamma(1,1)),
+#        participant_tau_prior = .(dgamma(1,1))
     ) {
         
     jags_model = metajags({
@@ -40,10 +44,22 @@ run_jags_analysis = function(df,
         )))
         
         #variance
-        tau ~ R(tau_prior)
+        if (is.na(tau_prior)) {
+            sigma ~ R(sigma_prior)
+            tau <- 1/sigma^2
+        }
+        else {
+            tau ~ R(tau_prior)
+        }
         
         #participant effects
-        participant_tau ~ R(participant_tau_prior)
+        if (is.na(participant_tau_prior)) {
+            participant_sigma ~ R(participant_sigma_prior)
+            participant_tau <- 1/sigma^2
+        }
+        else {
+            participant_tau ~ R(participant_tau_prior)
+        }
         for (k in 1:n_participant) {
             u[k] ~ dnorm(0, participant_tau)
         }
