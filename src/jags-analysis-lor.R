@@ -3,16 +3,17 @@ source("src/jags-analysis-lor-util.R")
 
 #run models, each using the posterior from the previous
 #as the prior for the next
-m1 = run_jags_analysis(filter(df, experiment == "e1"))
-m2 = run_jags_analysis(filter(df, experiment == "e2"),
+final_model = FALSE
+m1 = run_jags_analysis(filter(e$data, experiment == "e1"), final_model = final_model)
+m2 = run_jags_analysis(filter(e$data, experiment == "e2"), final_model = final_model,
     b_priors = m1$b_posts,
     participant_tau_prior = m1$participant_tau_post
 )
-m3 = run_jags_analysis(filter(df, experiment == "e3"),
+m3 = run_jags_analysis(filter(e$data, experiment == "e3"), final_model = final_model,
     b_priors = m2$b_posts,
     participant_tau_prior = m2$participant_tau_post
 )
-m4 = run_jags_analysis(filter(df, experiment == "e4"),
+m4 = run_jags_analysis(filter(e$data, experiment == "e4"), final_model = final_model,
     b_priors = c(m3$b_posts,
         #normal prior with scale derived from posterior of previous treatment
         #(sd of twice the approx top end of the 95% conf int)
@@ -48,11 +49,11 @@ b_nc = filter(b, interface != "control") %>%
         )
 ggposterior(b_nc, aes(x=interface, y=b, color=interface)) +
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_hline(yintercept=treatment1_log_odds_ratio, linetype="dashed", color="red") +
-    geom_hline(yintercept=treatment2_log_odds_ratio, linetype="dashed", color="green") +
+    geom_hline(yintercept=e$treatment1_log_odds_ratio, linetype="dashed", color="red") +
+    geom_hline(yintercept=e$treatment2_log_odds_ratio, linetype="dashed", color="green") +
     scale_x_discrete(limits=rev(levels(factor(b_nc$interface)))) +    #reverse interface display order
     facet_grid(experiment ~ ., drop=FALSE) +
-    ylim(-2,3)
+    ylim(-3,4)
 ggsave("output/jags-analysis.pdf")
 
 #within-participant sd
