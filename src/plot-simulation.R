@@ -4,7 +4,8 @@
 ###############################################################################
 
 #simulation of interest
-sim = "s1"
+#sim = "s10"
+sim = "s2"
 
 #forest plot
 forest_plot = function(df, density_data=NA) {
@@ -28,6 +29,7 @@ forest_plot = function(df, density_data=NA) {
 }
 
 #forest plot of traditional analysis
+windows()
 freq_effects %>%
     filter(simulation == sim) %>%
     forest_plot()
@@ -45,6 +47,7 @@ bayes_densities = bayes_effects %>%
     })
 
 #forest plot of bayesian analysis
+windows()
 bayes_effects %>%
     filter(simulation == sim, interface != "control") %>%
     mutate(
@@ -52,3 +55,37 @@ bayes_effects %>%
         experiment = factor(experiment, levels=c(levels(factor(experiment)), "meta"))
     ) %>%
     forest_plot(bayes_densities)
+
+
+
+
+
+
+#dotplot of effects from each experiment
+dotplot = function(df) {
+    ggplot(df, aes(x=completed_lor_diff)) +
+        geom_dotplot(aes(fill=interface, color=interface), binwidth=0.1) +
+        geom_vline(xintercept=0, linetype="dashed") +
+        geom_vline(xintercept=ss$treatment1_log_odds_ratio, linetype="dashed", color="red") +
+        geom_vline(xintercept=ss$treatment2_log_odds_ratio, linetype="dashed", color="green") +
+        geom_vline(xintercept=ss$treatment2_log_odds_ratio - ss$treatment1_log_odds_ratio, linetype="dashed", color="skyblue") +
+        scale_color_discrete(guide=FALSE) + 
+        scale_fill_discrete(guide=FALSE) + 
+        facet_grid(experiment ~ interface, drop=FALSE) + 
+        xlim(-4,4)
+}
+
+#frequentist dotplt
+windows()
+dotplot(freq_effects)
+
+#bayesian dotplot
+windows()
+bayes_effects %>%
+    filter(interface != "control") %>%
+    mutate(
+        interface = factor(interface),
+        #include (empty) meta experiment to line up plot with traditional analysis 
+        experiment = factor(experiment, levels=c(levels(factor(experiment)), "meta"))
+    ) %>%
+    dotplot()
