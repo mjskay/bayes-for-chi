@@ -1,17 +1,29 @@
-## Utility functions for the JAGS analysis
+# Functions for running the bayesian anlaysis 
+# 
+# Author: mjskay
+###############################################################################
 
 library(MASS, pos=which(search() == "package:stats"))   #load MASS high up on search path to prevent MASS::select() from having priority
+library(gamlss)         #qTF
 library(fitdistrplus)
 library(magrittr)
 library(plyr)
 library(dplyr)
 library(ggplot2)
 library(runjags)
+library(coda)
 library(metabayes)
 library(tidybayes)
 
-#scaled and shifted t distribution
-dst <- function(x, m, s, df) dt((x-m)/s, df)/s
+#fit a scaled and shifted t distribution
+fit_t = function(x) {
+    fit = gamlssML(x, family=TF)
+    list(
+       m = coef(fit, what="mu"),
+       s = exp(coef(fit, what="sigma")),
+       df = exp(coef(fit, what="nu"))     
+    )
+}
 
 ## pass in a data frame of one experiment to analyze, along with priors 
 run_jags_analysis = function(df,
@@ -50,7 +62,6 @@ run_jags_analysis = function(df,
             u[k] ~ dnorm(0, participant_tau)
         }
     })
-    print(jags_model)
     data_list = df %>%
         select(completed, interface, participant) %>% 
         compose_data()
@@ -81,8 +92,7 @@ run_jags_analysis = function(df,
         params = as.data.frame(as.matrix(as.mcmc.list(fit)))
         
         b = extract_samples(fit, b[interface])
-        b_fits = dlply(b, ~ interface, function(b) 
-            as.list(fitdistr(b$b, dst, start=list(m=mean(b$b), s=sd(b$b), df=20))$estimate))
+        b_fits = dlply(b, ~ interface, function(.) fit_t(.$b))
         b_posts = llply(b_fits, function(fit)
             with(fit, bquote(dt(.(m), .(1/s^2), .(df)))))
 
@@ -95,47 +105,62 @@ run_jags_analysis = function(df,
 bayesian_models_for_simulation = function(df, final_model=FALSE) {
     #analyze each experiment
     within(list(), {
-        m1 = run_jags_analysis(filter(df, experiment == "e1"), final_model = final_model)
-        m2 = run_jags_analysis(filter(df, experiment == "e2"), final_model = final_model,
-            b_priors = m1$b_posts,
-            participant_tau_prior = m1$participant_tau_post
+        e1 = run_jags_analysis(filter(df, experiment == "e1"), final_model = final_model)
+        e2 = run_jags_analysis(filter(df, experiment == "e2"), final_model = final_model,
+            b_priors = e1$b_posts,
+            participant_tau_prior = e1$participant_tau_post
         )
-        m3 = run_jags_analysis(filter(df, experiment == "e3"), final_model = final_model,
-            b_priors = m2$b_posts,
-            participant_tau_prior = m2$participant_tau_post
+        e3 = run_jags_analysis(filter(df, experiment == "e3"), final_model = final_model,
+            b_priors = e2$b_posts,
+            participant_tau_prior = e2$participant_tau_post
         )
-        m4 = run_jags_analysis(filter(df, experiment == "e4"), final_model = final_model,
-            b_priors = c(m3$b_posts,
+        e4 = run_jags_analysis(filter(df, experiment == "e4"), final_model = final_model,
+            b_priors = c(e3$b_posts,
                     #normal prior with scale derived from posterior of previous treatment
                     #(sd of twice the approx top end of the 95% conf int)
-                    bquote(dnorm(0, .(with(m3$b_fits$treatment1, 1/((m + s * 2) * 2) ^ 2))))
+                    bquote(dnorm(0, .(with(e3$b_fits$treatment1, 1/((m + s * 2) * 2) ^ 2))))
             ),
-            participant_tau_prior = m3$participant_tau_post
+            participant_tau_prior = e3$participant_tau_post
         )
-    })
+    }) %>% rev()    #must reverse order to get e1, e2, e3, e4
+}
+
+#perform bayesian analysis on a given set of simulations
+#save posterior to disk (for memory reasons) and then return
+#parametric fits to posteriors with summaries
+bayesian_effects_for_simulation = function(df, final_model=FALSE) {
+    #fit bayesian models
+    models = bayesian_models_for_simulation(df, final_model)
+    
+    #get basic effects
+    effects = ldply(models, .id="experiment", function(.) ldply(.$b_fits, as.data.frame))
+    
+    #add the difference between treatment2 and treatment1 in the last experiment 
+    t2_t1 = compare_levels(models$e4$b, b, by=interface, 
+        comparison=.(treatment2 - treatment1))
+    t2_t1_fit = fit_t(t2_t1$b)
+    effects %<>% rbind(
+            cbind(experiment="e4", interface="treatment2 - treatment1", as.data.frame(t2_t1_fit))
+        )
+    
+    #add the mean, max, min estimated differences (the intervals)
+    effects %<>%
+        mutate(
+            completed_lor_diff = m, 
+            completed_lor_diff_min = qTF(.025, m, s, df),
+            completed_lor_diff_max = qTF(.975, m, s, df)
+        )
+
+    #save models to disk for later and then delete for memory
+    save(models, file=paste0("output/bayesian_models_", df[1,"simulation"], ".RData"))
+    rm("models")
+    
+    effects
 }
 
 #perform bayesian analysis on given set of simulations of experiments
 bayesian_analysis = function(ss) {
-    models = dlply(ss$data, ~ simulation, bayesian_models_for_simulation, 
+    #get effects from models
+    ddply(ss$data, ~ simulation, bayesian_effects_for_simulation, 
         .progress=progress_win(title="Running Bayesian analysis..."))
-    ss$params = ldply(models, .id="simulation", function (sim_models) 
-        rbind.fill(
-            cbind(experiment="e1", sim_models$m1$params),
-            cbind(experiment="e2", sim_models$m2$params),
-            cbind(experiment="e3", sim_models$m3$params),
-            cbind(experiment="e4", sim_models$m4$params)
-        ))
-    ss$b = ldply(models, .id="simulation", function (sim_models) 
-        rbind(
-            cbind(experiment="e1", sim_models$m1$b),
-            cbind(experiment="e2", sim_models$m2$b),
-            cbind(experiment="e3", sim_models$m3$b),
-            cbind(experiment="e4", sim_models$m4$b),
-            #add contrast between treatments in last experiment
-            cbind(experiment="e4", compare_levels(sim_models$m4$b, b, by=interface, 
-                    comparison=.(treatment2 - treatment1)))
-        ))
-
-    ss
 }

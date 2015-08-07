@@ -1,6 +1,6 @@
-# Functions for generating hypothetical experiments
+# Functions for running simulations to generate hypothetical experiments
 # 
-# Author: Matthew
+# Author: mjskay
 ###############################################################################
 
 library(magrittr)

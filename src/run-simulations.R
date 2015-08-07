@@ -1,13 +1,10 @@
-# Run simulations of experiments and analysis
+# Run simulations of experiments and analysis and save results to output/simulations.RData
 # 
 # Author: Matthew
 ###############################################################################
 
-source("src/generate-data.R")
-source("src/frequentist-analysis.R")
+source("src/functions/simulations.R")
 
-memory.limit(8000)
+ss = run_simulations(100)
 
-ss = run_simulations(2) %>%
-    frequentist_analysis() %>%
-    bayesian_analysis()
+save("ss", file="output/simulations.RData")

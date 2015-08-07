@@ -1,10 +1,18 @@
+# Functions for running the frequentist anlaysis 
+# 
+# Author: mjskay
+###############################################################################
+
 library(plyr)
-library(magrittr)
 library(dplyr)
+library(magrittr)
 library(ggplot2)
 library(lme4)
 library(metafor)
 library(lsmeans)
+library(boot)       #logit, inv.logit
+
+
 
 theme_set(theme_bw())
 
@@ -102,9 +110,9 @@ frequentist_analysis_for_simulation = function(df) {
     study_effects
 }
 
-#perform traditional analysis on given set of simulations and return modified simulations
+#perform traditional analysis on given set of simulations and return
+#a data frame of estimated study effects
 frequentist_analysis = function(ss) {
-    ss$study_effects = ddply(ss$data, ~ simulation, frequentist_analysis_for_simulation, 
+    ddply(ss$data, ~ simulation, frequentist_analysis_for_simulation, 
         .progress=progress_win(title="Running frequentist analysis..."))
-    ss
 }
