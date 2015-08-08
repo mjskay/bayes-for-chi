@@ -116,9 +116,9 @@ bayesian_models_for_simulation = function(df, final_model=FALSE) {
         )
         e4 = run_jags_analysis(filter(df, experiment == "e4"), final_model = final_model,
             b_priors = c(e3$b_posts,
-                    #normal prior with scale derived from posterior of previous treatment
-                    #(sd of twice the approx top end of the 95% conf int)
-                    bquote(dnorm(0, .(with(e3$b_fits$treatment1, 1/((m + s * 2) * 2) ^ 2))))
+                    #cauchy prior with scale derived from posterior of previous treatment
+                    #(sd of the approx top end of the 95% credibility int)
+                    bquote(dt(0, .(with(e3$b_fits$treatment1, 1 / max(abs(qTF(c(.025,.975), m, s, df)))))^2, 1))
             ),
             participant_tau_prior = e3$participant_tau_post
         )
@@ -132,7 +132,7 @@ bayesian_effects_for_simulation = function(df, final_model=FALSE) {
     #fit bayesian models
     models = bayesian_models_for_simulation(df, final_model)
     
-    #get basic effects
+    #get effects from each study
     effects = ldply(models, .id="experiment", function(.) ldply(.$b_fits, as.data.frame))
     
     #add the difference between treatment2 and treatment1 in the last experiment 
@@ -159,8 +159,8 @@ bayesian_effects_for_simulation = function(df, final_model=FALSE) {
 }
 
 #perform bayesian analysis on given set of simulations of experiments
-bayesian_analysis = function(ss) {
+bayesian_analysis = function(simulations, final_model=FALSE) {
     #get effects from models
-    ddply(ss$data, ~ simulation, bayesian_effects_for_simulation, 
+    ddply(simulations, ~ simulation, function(df) bayesian_effects_for_simulation(df, final_model), 
         .progress=progress_win(title="Running Bayesian analysis..."))
 }

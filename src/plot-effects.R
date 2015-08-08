@@ -1,11 +1,11 @@
-# Plots for a single simulation
+# Plots of effects from each analysis
 # 
 # Author: Matthew
 ###############################################################################
 
 #simulation of interest
-#sim = "s10"
-sim = "s2"
+sim = "s3"
+settings = attr(simulations, "settings")
 
 #forest plot
 forest_plot = function(df, density_data=NA) {
@@ -17,9 +17,9 @@ forest_plot = function(df, density_data=NA) {
     
     p +
         geom_hline(yintercept=0, linetype="dashed") +
-        geom_hline(yintercept=ss$treatment1_log_odds_ratio, linetype="dashed", color="red") +
-        geom_hline(yintercept=ss$treatment2_log_odds_ratio, linetype="dashed", color="green") +
-        geom_hline(yintercept=ss$treatment2_log_odds_ratio - ss$treatment1_log_odds_ratio, linetype="dashed", color="skyblue") +
+        geom_hline(yintercept=settings$treatment1_log_odds_ratio, linetype="dashed", color="red") +
+        geom_hline(yintercept=settings$treatment2_log_odds_ratio, linetype="dashed", color="green") +
+        geom_hline(yintercept=settings$treatment2_log_odds_ratio - settings$treatment1_log_odds_ratio, linetype="dashed", color="skyblue") +
         geom_pointrange(mapping=aes(ymin=completed_lor_diff_min, ymax=completed_lor_diff_max, color=interface), size=0.75) +
         scale_x_discrete(limits=rev(levels(freq_effects$interface))) +    #reverse treatment display order
         scale_color_discrete(guide=FALSE) + 
@@ -66,9 +66,9 @@ dotplot = function(df) {
     ggplot(df, aes(x=completed_lor_diff)) +
         geom_dotplot(aes(fill=interface, color=interface), binwidth=0.1) +
         geom_vline(xintercept=0, linetype="dashed") +
-        geom_vline(xintercept=ss$treatment1_log_odds_ratio, linetype="dashed", color="red") +
-        geom_vline(xintercept=ss$treatment2_log_odds_ratio, linetype="dashed", color="green") +
-        geom_vline(xintercept=ss$treatment2_log_odds_ratio - ss$treatment1_log_odds_ratio, linetype="dashed", color="skyblue") +
+        geom_vline(xintercept=settings$treatment1_log_odds_ratio, linetype="dashed", color="red") +
+        geom_vline(xintercept=settings$treatment2_log_odds_ratio, linetype="dashed", color="green") +
+        geom_vline(xintercept=settings$treatment2_log_odds_ratio - settings$treatment1_log_odds_ratio, linetype="dashed", color="skyblue") +
         scale_color_discrete(guide=FALSE) + 
         scale_fill_discrete(guide=FALSE) + 
         facet_grid(experiment ~ interface, drop=FALSE) + 

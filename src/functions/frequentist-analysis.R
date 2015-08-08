@@ -20,7 +20,7 @@ theme_set(theme_bw())
 #(i.e., a set of experiments from the same simulation)
 frequentist_analysis_for_simulation = function(df) {
     #calculate study-level effect sizes (mean diff), intervals, and standard error
-    study_effects = ddply(df, ~ experiment, function (df) {
+    effects = ddply(df, ~ experiment, function (df) {
             #fit models for each outcome variable
             m.rating = lmer(rating ~ interface + (1|participant), data=df)
             m.response_rate = glmer(response_rate ~ interface + (1|participant), data=df, family=poisson)
@@ -80,17 +80,17 @@ frequentist_analysis_for_simulation = function(df) {
         })
     
     #meta analysis
-    mm.rating = rma(yi=rating_diff, sei=rating_se, data=filter(study_effects, interface=="treatment1"))
+    mm.rating = rma(yi=rating_diff, sei=rating_se, data=filter(effects, interface=="treatment1"))
     smm.rating = summary(mm.rating)
     
-    mm.response_rate = rma(yi=response_rate_log_diff, sei=response_rate_se, data=filter(study_effects, interface=="treatment1"))
+    mm.response_rate = rma(yi=response_rate_log_diff, sei=response_rate_se, data=filter(effects, interface=="treatment1"))
     smm.response_rate = summary(mm.response_rate)
     
-    mm.completed = rma(yi=completed_lor_diff, sei=completed_se, data=filter(study_effects, interface=="treatment1"))
+    mm.completed = rma(yi=completed_lor_diff, sei=completed_se, data=filter(effects, interface=="treatment1"))
     smm.completed = summary(mm.completed)
     
     
-    study_effects %<>% rbind(data.frame(
+    effects %<>% rbind(data.frame(
             experiment="meta",
             interface="treatment1", 
             rating_diff = smm.rating$b, 
@@ -107,12 +107,12 @@ frequentist_analysis_for_simulation = function(df) {
             completed_se = smm.completed$se
         ))
     
-    study_effects
+    effects
 }
 
 #perform traditional analysis on given set of simulations and return
 #a data frame of estimated study effects
-frequentist_analysis = function(ss) {
-    ddply(ss$data, ~ simulation, frequentist_analysis_for_simulation, 
+frequentist_analysis = function(simulations) {
+    ddply(simulations, ~ simulation, frequentist_analysis_for_simulation, 
         .progress=progress_win(title="Running frequentist analysis..."))
 }

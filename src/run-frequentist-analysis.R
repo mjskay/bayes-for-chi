@@ -9,6 +9,6 @@ memory.limit(8000)
 
 load(file="output/simulations.RData")
 
-freq_effects = frequentist_analysis(ss)
+freq_effects = frequentist_analysis(simulations)
 
 save("freq_effects", file="output/freq_effects.RData")
