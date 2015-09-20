@@ -27,7 +27,7 @@ fit_t = function(x) {
 
 ## pass in a data frame of one experiment to analyze, along with priors 
 run_jags_analysis = function(experiment,
-        final_model = FALSE,
+        final_model = FALSE,    #we ignore final_model since this is such a quick fit anyway
         b_priors = .(
             dt(0, 0.16, 1),     #weakly-informed default prior for logistic regression per Gelman et al, 2008
             dt(0, 0.16, 1)
@@ -54,21 +54,14 @@ run_jags_analysis = function(experiment,
     m = list()  #returned model
     
     #fit jags model
-    if (final_model) {
-        burnin=500000
-        sample=10000
-        thin=50
-    }
-    else {
-        burnin=10000
-        sample=10000
-        thin=1
-    }
+    burnin=20000
+    sample=10000
+    thin=2
     m$fit = run.jags(
             model=code(jags_model), monitor=c("b"), 
             burnin=burnin, sample=sample, thin=thin, 
             modules="glm", data=data_list, method="parallel",
-            summarise=FALSE
+            summarise=FALSE, n.chains=2
         ) %>%
         apply_prototypes(experiment)
 
@@ -125,9 +118,9 @@ bayesian_effects_for_simulation = function(simulation, final_model=FALSE) {
     #add the mean, max, min estimated differences (the intervals)
     effects %<>%
         mutate(
-            completed_lor_diff = m, 
-            completed_lor_diff_min = qTF(.025, m, s, df),
-            completed_lor_diff_max = qTF(.975, m, s, df)
+            completed_lor = m, 
+            completed_lor_min = qTF(.025, m, s, df),
+            completed_lor_max = qTF(.975, m, s, df)
         )
 
     #save models to disk for later and then delete for memory
