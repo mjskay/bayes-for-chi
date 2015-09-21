@@ -5,6 +5,7 @@
 
 source("src/functions/simulations.R")
 
-simulations = run_simulations(100)
+n_participants = 20
+simulations = run_simulations(100, n_participants = n_participants)
 
-save("simulations", file="output/simulations.RData")
+save("simulations", file=paste0("output/n", n_participants, "/simulations.RData"))

@@ -121,4 +121,9 @@ effects_rmse = function(effects) {
 effects_rmse(freq_effects)
 effects_rmse(bayes_effects)
 
+freq_effects %>%
+    filter(interface=="treatment1", experiment=="meta") %>% 
+    summarise(rmse=sqrt(mean((completed_lor - settings$treatment1_completed_lor)^2)))
+
+
 
