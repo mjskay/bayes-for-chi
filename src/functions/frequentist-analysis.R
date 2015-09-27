@@ -3,6 +3,7 @@
 # Author: mjskay
 ###############################################################################
 
+library(MASS, pos=which(search() == "package:stats"))   #load MASS high up on search path to prevent MASS::select() from having priority
 library(plyr)
 library(dplyr)
 library(magrittr)

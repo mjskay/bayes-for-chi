@@ -3,6 +3,7 @@
 # Author: mjskay
 ###############################################################################
 
+library(MASS, pos=which(search() == "package:stats"))   #load MASS high up on search path to prevent MASS::select() from having priority
 library(magrittr)
 library(plyr)
 library(dplyr)
@@ -66,7 +67,7 @@ run_simulation = function(...) {
 
 run_simulations = function(n_simulations = 2, ...) {
     #list of simulations
-    experiments = llply(1:n_simulations, function(s) run_simulation())
+    experiments = llply(1:n_simulations, function(s) run_simulation(...))
     
     #collapse data frames from experiments and save settings
     simulations = ldply(1:n_simulations, function(s_i) data.frame(

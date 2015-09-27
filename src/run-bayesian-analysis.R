@@ -7,8 +7,10 @@ source("src/functions/bayesian-analysis.R")
 
 memory.limit(8000)
 
-load(file="output/simulations.RData")
+n_participants = 20
+
+load(paste0("output/n", n_participants, "/simulations.RData"))
 
 bayes_effects = bayesian_analysis(simulations)
 
-save("bayes_effects", file="output/bayes_effects.RData")
+save("bayes_effects", file=paste0("output/n", n_participants, "/bayes_effects.RData"))

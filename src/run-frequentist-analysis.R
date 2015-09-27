@@ -7,8 +7,10 @@ source("src/functions/frequentist-analysis.R")
 
 memory.limit(8000)
 
-load(file="output/simulations.RData")
+n_participants = 20
+
+load(paste0("output/n", n_participants, "/simulations.RData"))
 
 freq_effects = frequentist_analysis(simulations)
 
-save("freq_effects", file="output/freq_effects.RData")
+save("freq_effects", file=paste0("output/n", n_participants, "/freq_effects.RData"))
