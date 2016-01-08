@@ -1,9 +1,15 @@
-# Data and analysis for advancing Bayesian analysis at CHI
+# Supplementary materials for _Researcher-Centered Design of Statistics: Why Bayesian Statistics Better Fit the Culture and Incentives of HCI_
 
-* `src/generate-data.R` Generates the simulated experiments
+_Matthew Kay ([mjskay@uw.edu](mailto:mjskay@uw.edu))_<br>
+_Gregory L. Nelson ([glnelson@uw.edu](mailto:glnelson@uw.edu))_<br>
+_Eric B. Hekler ([ehekler@asu.edu](mailto:ehekler@asu.edu))_
 
-* `src/traditional-analysis.R` performs a traditional meta-analysis
+This repository contains supplemetary material for _Researcher-Centered Design of Statistics: Why Bayesian Statistics Better Fit the Culture and Incentives of HCI_ (CHI 2016).
 
-* `src/jags-analysis.R` analysis in JAGS (TODO)
+* `src/run-simulations.R` Generates the simulated experiments
 
-* `src/stan-analysis.R` analysis in STAN (TODO - this is much less complete than the JAGS one; start there)
+* `src/run-frequentist-analysis.R` performs a the traditional frequentist meta-analyses
+
+* `src/run-bayesian-analysis.R` performs the Bayesian analyses
+
+* `src/plot-effects.R` plots the resulting effects
