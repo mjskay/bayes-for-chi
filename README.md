@@ -8,7 +8,7 @@ This repository contains supplemetary material for _Researcher-Centered Design o
 
 * `src/run-simulations.R` Generates the simulated experiments
 
-* `src/run-frequentist-analysis.R` performs a the traditional frequentist meta-analyses
+* `src/run-frequentist-analysis.R` performs the frequentist meta-analyses
 
 * `src/run-bayesian-analysis.R` performs the Bayesian analyses
 
